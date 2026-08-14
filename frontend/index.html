@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Webdev Result Evolution Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#0a0f1a;--panel:#111827;--panel2:#1a2336;--line:#243047;
+  --txt:#dde6f0;--muted:#7a8fa8;--faint:#4a5e72;
+  --jade:#38bdf8;--jade-dim:#0c3348;
+  --amber:#fbbf24;--amber-dim:#453a10;
+  --red:#f87171;--red-dim:#501c1c;
+  --slate:#818cf8;--slate-dim:#1e2155;
+  --violet:#c084fc;
+  --accent:#38bdf8;--accent-glow:rgba(56,189,248,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--ink);color:var(--txt);font-family:'IBM Plex Sans',sans-serif;font-size:14px;height:100vh;overflow:hidden;display:flex;}
+a{color:var(--jade);text-decoration:none;}
+button{cursor:pointer;border:none;outline:none;font-family:inherit;}
+input,select,textarea{font-family:inherit;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:13px;outline:none;width:100%;}
+input[type=file]{display:none!important;}
+input:focus,select:focus,textarea:focus{border-color:var(--jade);}
+select option{background:var(--panel2);}
+select optgroup{color:var(--muted);font-size:11px;}
+/* ---- 布局 ---- */
+.sidebar{width:236px;min-width:236px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:0;}
+.brand{padding:20px 18px 18px;border-bottom:1px solid var(--line);margin-bottom:10px;background:linear-gradient(160deg,var(--jade-dim) 0%,transparent 100%);}
+.brand h1{font-size:22px;font-weight:700;color:var(--jade);line-height:1.2;letter-spacing:-.3px;}
+.brand .brand-sub{font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:.3px;}
+nav{flex:1;display:flex;flex-direction:column;gap:2px;padding:0 10px;overflow-y:auto;}
+.nav-main-btn{width:100%;text-align:left;padding:12px 12px;border-radius:7px;background:transparent;color:var(--txt);font-size:17px;font-weight:600;transition:all .15s;}
+.nav-main-btn:hover{background:var(--panel2);}
+.nav-main-btn.active{background:var(--jade-dim);color:var(--jade);border-left:3px solid var(--jade);padding-left:9px;}
+.nav-sub-group{margin-left:0;margin-top:2px;}
+.nav-sub-btn{width:100%;text-align:left;padding:9px 12px 9px 28px;border-radius:7px;background:transparent;color:var(--muted);font-size:14px;transition:all .15s;}
+.nav-sub-btn:hover{background:var(--panel2);color:var(--txt);}
+.nav-sub-btn.active{background:var(--jade-dim);color:var(--jade);font-weight:500;border-left:3px solid var(--jade);padding-left:25px;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{height:60px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;padding:0 22px;background:var(--panel);}
+.topbar h2{font-size:22px;font-weight:700;color:var(--txt);letter-spacing:-.2px;}
+.content{flex:1;overflow-y:auto;padding:22px;}
+/* ---- 视图 ---- */
+.view{display:none;}.view.active{display:block;}
+/* ---- 卡片 ---- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;}
+.card-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;}
+/* ---- 表单 ---- */
+.form-row{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.form-row label{font-size:12px;color:var(--muted);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.opt-label{font-size:10px;color:var(--faint);margin-left:4px;font-weight:400;}
+/* ---- 按钮 ---- */
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:500;transition:all .15s;}
+.btn-primary{background:var(--jade);color:#071320;}
+.btn-primary:hover{opacity:.88;box-shadow:0 0 12px var(--accent-glow);}
+.btn-primary:disabled{background:var(--faint);color:var(--panel);cursor:not-allowed;}
+.btn-outline{background:transparent;color:var(--jade);border:1px solid var(--jade);}
+.btn-outline:hover{background:var(--jade-dim);}
+.btn-danger{background:var(--red);color:#fff;}
+/* ---- 上传区 ---- */
+.upload-zone{border:2px dashed var(--line);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .15s;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--jade);background:var(--jade-dim);}
+.upload-zone.done{border-color:var(--jade);border-style:solid;}
+.upload-zone p{color:var(--muted);font-size:13px;}
+.upload-zone .filename{color:var(--jade);font-size:13px;font-weight:500;}
+/* ---- 状态徽章 ---- */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-pass{background:var(--jade-dim);color:var(--jade);}
+.badge-warn{background:var(--amber-dim);color:var(--amber);}
+.badge-fail{background:var(--red-dim);color:var(--red);}
+.badge-info{background:var(--slate-dim);color:var(--slate);}
+/* ---- 表格 ---- */
+.tbl{width:100%;border-collapse:collapse;font-size:16px;}
+.tbl th{text-align:left;padding:14px 16px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap;font-size:14px;}
+.tbl td{padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:middle;}
+.tbl tr:hover td{background:var(--panel2);}
+/* ---- 任务历史专属 ---- */
+#history-table td a{font-size:16px;font-weight:600;}
+#history-table td{font-size:15px;}
+.badge{display:inline-block;padding:4px 12px;border-radius:10px;font-size:13px;font-weight:500;}
+/* ---- 上传按钮 ---- */
+.upload-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:7px;background:var(--panel2);border:1px solid var(--jade);color:var(--jade);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;}
+.upload-btn:hover{background:var(--jade-dim);}
+/* ---- 指标卡片 ---- */
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+.metric-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px 24px;display:flex;flex-direction:column;justify-content:space-between;}
+.metric-card .val{font-size:40px;font-weight:700;color:var(--jade);font-family:'IBM Plex Mono',monospace;letter-spacing:-1px;line-height:1;}
+.metric-card .lbl{font-size:14px;color:var(--txt);margin-top:10px;font-weight:600;}
+.metric-card .sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.metric-card.warn .val{color:var(--amber);}
+.metric-card.danger .val{color:var(--red);}
+.metrics-secondary{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+/* ---- 进度条 ---- */
+.progress-bar{height:6px;background:var(--line);border-radius:3px;margin:8px 0;}
+.progress-fill{height:100%;background:var(--jade);border-radius:3px;transition:width .3s;}
+/* ---- 步骤 ---- */
+.steps{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.step{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:6px;background:var(--panel);}
+.step-dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex-shrink:0;}
+.step.done .step-dot{background:var(--jade);}
+.step.active .step-dot{background:var(--amber);animation:pulse 1s infinite;}
+.step.error .step-dot{background:var(--red);}
+.step-label{font-size:13px;color:var(--muted);}
+.step.done .step-label{color:var(--txt);}
+.step.active .step-label{color:var(--amber);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+/* ---- Toast ---- */
+#toast{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px;}
+.toast{padding:10px 16px;border-radius:8px;font-size:13px;background:var(--panel);border:1px solid var(--line);animation:fadein .2s;max-width:320px;}
+.toast.ok{border-color:var(--jade);color:var(--jade);}
+.toast.err{border-color:var(--red);color:var(--red);}
+.toast.warn{border-color:var(--amber);color:var(--amber);}
+@keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+/* ---- 弹窗 ---- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:center;justify-content:center;}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px 28px 22px;min-width:460px;max-width:600px;max-height:80vh;overflow-y:auto;}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.modal-footer{display:flex;justify-content:flex-end;margin-top:20px;}
+/* ---- 分页 ---- */
+.pagination{display:flex;align-items:center;gap:8px;margin-top:12px;justify-content:flex-end;}
+.pagination button{padding:4px 10px;border-radius:4px;background:var(--panel2);color:var(--txt);font-size:12px;}
+.pagination button:disabled{opacity:.4;cursor:not-allowed;}
+.pagination span{font-size:12px;color:var(--muted);}
+</style>
+</head>
+<body>
+<!-- 侧边栏 -->
+<div class="sidebar">
+  <div class="brand">
+    <h1>Result Evolution</h1>
+    <div class="brand-sub">WebDev 评估优化 Agent</div>
+  </div>
+  <nav id="nav">
+    <button class="nav-main-btn" data-view="v-create">➕ 新建任务</button>
+    <button class="nav-main-btn" data-view="v-skills">⚙️ Skills & 权重</button>
+    <button class="nav-main-btn active" id="nav-history-btn" data-view="v-history">📋 任务历史</button>
+    <div class="nav-sub-group" id="nav-task-sub">
+      <button class="nav-sub-btn" id="nav-metrics" data-view="v-metrics">📊 指标看板</button>
+      <button class="nav-sub-btn" id="nav-diff" data-view="v-diff">🔎 差异样本</button>
+      <button class="nav-sub-btn" id="nav-rec" data-view="v-recommendations">💡 优化建议</button>
+    </div>
+  </nav>
+</div>
+
+<!-- 主区域 -->
+<div class="main">
+  <div class="topbar">
+    <h2 id="page-title">任务历史</h2>
+  </div>
+  <div class="content">
+
+    <!-- 任务历史 -->
+    <div id="v-history" class="view active">
+      <div class="card">
+        <div class="card-title">历史任务</div>
+        <table class="tbl" id="history-table">
+          <thead><tr>
+            <th style="min-width:160px">任务名称</th>
+            <th style="min-width:100px">批次</th>
+            <th style="min-width:90px;text-align:center">状态</th>
+            <th style="min-width:130px">Judge模型</th>
+            <th style="min-width:130px">创建时间</th>
+            <th style="min-width:140px;text-align:center">操作</th>
+          </tr></thead>
+          <tbody id="history-tbody">
+            <tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 新建任务 -->
+    <div id="v-create" class="view">
+      <div class="card">
+        <div class="card-title">上传文件</div>
+        <div class="form-grid" style="margin-bottom:16px">
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px">人工 Ground Truth <span style="color:var(--red)">*</span></div>
+            <div class="upload-zone" id="zone-gt" onclick="document.getElementById('file-gt').click()">
+              <p>点击或拖拽上传 GT 文件（.xlsx）</p>
+              <div class="filename" id="gt-name" style="display:none"></div>
+            </div>
+            <div id="gt-remove-row" style="display:none;margin-top:6px;text-align:right">
+              <button class="btn btn-danger" style="padding:3px 10px;font-size:12px" onclick="clearFile('gt')">✕ 删除</button>
+            </div>
+            <input type="file" id="file-gt" accept=".xlsx,.xls" style="display:none"/>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px">自动评估 Auto Eval <span style="color:var(--red)">*</span></div>
+            <div class="upload-zone" id="zone-ae" onclick="document.getElementById('file-ae').click()">
+              <p>点击或拖拽上传 Auto Eval 文件（.xlsx）</p>
+              <div class="filename" id="ae-name" style="display:none"></div>
+            </div>
+            <div id="ae-remove-row" style="display:none;margin-top:6px;text-align:right">
+              <button class="btn btn-danger" style="padding:3px 10px;font-size:12px" onclick="clearFile('ae')">✕ 删除</button>
+            </div>
+            <input type="file" id="file-ae" accept=".xlsx,.xls" style="display:none"/>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">任务信息</div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>任务名称 *</label>
+            <input id="task-name" placeholder="例：2026Q2批次评估"/>
+          </div>
+          <div class="form-row">
+            <label>数据批次 <span class="opt-label">非必填</span></label>
+            <input id="task-batch" placeholder="例：batch-2026-07"/>
+          </div>
+          <div class="form-row">
+            <label>Judge模型 <span style="color:var(--red)">*</span></label>
+            <select id="task-judge">
+              <option value="" disabled selected>-- 请选择 --</option>
+              <optgroup label="测试">
+                <option value="mock">Mock（测试用，不调用真实LLM）</option>
+              </optgroup>
+              <optgroup label="外部模型">
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                <option value="claude-opus-4">Claude Opus 4</option>
+                <option value="claude-sonnet-4">Claude Sonnet 4</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+              </optgroup>
+              <optgroup label="内部模型">
+                <option value="ernie-internal">文心（内网网关）</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-outline" id="btn-check-dim" disabled>🔍 检查维度</button>
+          <button class="btn btn-primary" id="btn-create" disabled>创建任务</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skills & 权重 -->
+    <div id="v-skills" class="view">
+      <!-- 顶部版本信息 -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">版本信息</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <div class="form-row">
+            <label>Rubric 版本 <span class="opt-label">非必填</span></label>
+            <input id="meta-rubric" placeholder="例：v2.1"/>
+          </div>
+          <div class="form-row">
+            <label>Skills 版本 <span class="opt-label">非必填</span></label>
+            <input id="meta-skill" placeholder="例：v1.3"/>
+          </div>
+          <div class="form-row">
+            <label>权重版本 <span class="opt-label">非必填</span></label>
+            <input id="meta-weight" placeholder="例：v1.0"/>
+          </div>
+        </div>
+        <button class="btn btn-outline" style="margin-top:6px" onclick="saveMeta()">保存版本信息</button>
+      </div>
+
+      <!-- Skills 编辑区：左侧维度列表 + 右侧编辑 -->
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;margin-bottom:16px">
+        <!-- 左：维度列表 -->
+        <div class="card" style="padding:14px;overflow-y:auto;max-height:680px">
+          <div style="margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">维度列表</div>
+            <label class="upload-btn" style="width:100%;justify-content:center;box-sizing:border-box">
+              📂 上传维度文件
+              <input type="file" id="file-skills-upload" accept=".yaml,.yml,.xlsx,.xls,.txt,.md" style="display:none" onchange="uploadSkillsFile(this)"/>
+            </label>
+            <div style="font-size:11px;color:var(--faint);margin-top:5px;text-align:center">支持 YAML / Excel / TXT / MD</div>
+          </div>
+          <div id="dim-list" style="display:flex;flex-direction:column;gap:3px"></div>
+        </div>
+        <!-- 右：编辑面板 -->
+        <div class="card" id="dim-edit-panel" style="display:flex;flex-direction:column;gap:12px">
+          <div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">← 从左侧选择维度进行编辑</div>
+        </div>
+      </div>
+
+      <!-- 权重配置 -->
+      <div class="card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+          <div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:0;line-height:34px">类别权重配置</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <label class="upload-btn">
+              📂 上传权重文件
+              <input type="file" id="file-weights-upload" accept=".yaml,.yml,.xlsx,.xls,.txt,.md" style="display:none" onchange="uploadWeightsFile(this)"/>
+            </label>
+            <span style="font-size:11px;color:var(--faint)">支持 YAML / Excel / TXT / MD</span>
+          </div>
+        </div>
+        <div id="weights-editor" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"></div>
+        <div style="margin-top:16px;display:flex;align-items:center;gap:14px">
+          <button class="btn btn-primary" style="font-size:15px;padding:10px 22px" onclick="saveWeights()">保存权重</button>
+          <span id="weights-sum-hint" style="font-size:13px;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 维度检查（保留视图供旧逻辑兼容，侧边栏不再显示） -->
+    <div id="v-check" class="view" style="display:none">
+      <div id="check-content"></div>
+    </div>
+
+    <!-- 指标看板 -->
+    <div id="v-metrics" class="view">
+      <!-- 下载报告入口 -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+        <button class="btn btn-outline" style="font-size:14px;padding:8px 20px" onclick="exportReport()">📥 下载报告</button>
+      </div>
+      <!-- 主指标：4列 2行 -->
+      <div class="metric-grid" id="metric-cards"></div>
+      <!-- 混淆矩阵 + 评分分布并排 -->
+      <div class="metrics-secondary">
+        <div class="card" id="confusion-card" style="display:none">
+          <div class="card-title">混淆矩阵</div>
+          <div id="confusion-table"></div>
+        </div>
+        <div class="card" id="dist-card" style="display:none">
+          <div class="card-title">评分分布</div>
+          <div id="dist-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 差异样本 -->
+    <div id="v-diff" class="view">
+      <div class="card">
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>差异样本明细</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="pagination" id="diff-pagination-top" style="margin-top:0"></div>
+            <select id="diff-filter-dim" style="width:120px" onchange="DIFF_FILTER.dimension_code=this.value;loadDiff(1)"><option value="">全部维度</option></select>
+            <select id="diff-filter-severe" style="width:110px" onchange="DIFF_FILTER.severe_only=this.value;loadDiff(1)"><option value="">全部</option><option value="1">仅严重误判</option></select>
+          </div>
+        </div>
+        <table class="tbl">
+          <thead><tr>
+            <th>数据ID</th><th>候选模型</th><th>维度</th>
+            <th>GT</th><th>Auto</th><th>差值</th>
+            <th>归因</th><th>Auto原因</th>
+          </tr></thead>
+          <tbody id="diff-tbody"></tbody>
+        </table>
+        <div class="pagination" id="diff-pagination"></div>
+      </div>
+    </div>
+
+    <!-- 优化建议 -->
+    <div id="v-recommendations" class="view">
+      <!-- Skill 建议 -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:4px;height:20px;background:var(--jade);border-radius:2px"></div>
+        <span style="font-size:16px;font-weight:700;color:var(--txt)">Skill 建议</span>
+        <span style="font-size:12px;color:var(--muted)">维度级 Prompt / Rubric 优化候选</span>
+      </div>
+      <div id="rec-skill" style="margin-bottom:28px"></div>
+
+      <!-- 策略建议 -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:4px;height:20px;background:var(--amber);border-radius:2px"></div>
+        <span style="font-size:16px;font-weight:700;color:var(--txt)">策略建议</span>
+        <span style="font-size:12px;color:var(--muted)">流程与评估策略调整方向</span>
+      </div>
+      <div id="rec-strategy" style="margin-bottom:28px"></div>
+
+      <!-- 权重建议 -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:4px;height:20px;background:var(--slate);border-radius:2px"></div>
+        <span style="font-size:16px;font-weight:700;color:var(--txt)">权重建议</span>
+        <span style="font-size:12px;color:var(--muted)">三套候选权重方案（不自动生效）</span>
+      </div>
+      <div id="rec-weight"></div>
+    </div>
+
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+const API="";
+let TASK=null; // 当前任务
+let GT_FILE=null,AE_FILE=null;
+let DIFF_PAGE=1,DIFF_TOTAL=0,DIFF_FILTER={};
+let POLL_TIMER=null; // 保留兼容，已不使用
+
+// ---- 导航 ----------------------------------------------------------------
+const TITLES={"v-history":"任务历史","v-create":"新建任务",
+  "v-skills":"Skills & 权重配置",
+  "v-metrics":"指标看板","v-diff":"差异样本","v-recommendations":"优化建议"};
+
+const SUB_VIEWS=new Set(["v-metrics","v-diff","v-recommendations"]);
+
+document.querySelectorAll("[data-view]").forEach(b=>{
+  b.onclick=()=>showView(b.dataset.view);
+});
+
+function showView(id){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  // 清除所有导航激活态
+  document.querySelectorAll(".nav-main-btn,.nav-sub-btn").forEach(b=>b.classList.remove("active"));
+
+  const v=document.getElementById(id);
+  if(v) v.classList.add("active");
+
+  // 激活对应导航按钮
+  if(SUB_VIEWS.has(id)){
+    // 激活对应子项，同时父级"任务历史"也高亮
+    document.getElementById("nav-history-btn").classList.add("active");
+    const sub=document.querySelector(`.nav-sub-btn[data-view="${id}"]`);
+    if(sub) sub.classList.add("active");
+  } else {
+    const nb=document.querySelector(`.nav-main-btn[data-view="${id}"]`);
+    if(nb) nb.classList.add("active");
+    if(id==="v-history") document.getElementById("nav-history-btn").classList.add("active");
+  }
+
+  document.getElementById("page-title").textContent=TITLES[id]||"";
+  if(id==="v-history"){loadHistory();}
+  else{stopHistoryPoll();}
+  if(id==="v-skills") loadSkillsView();
+  if(id==="v-metrics") TASK?loadMetrics():showNoTask("metric-cards");
+  if(id==="v-diff") TASK?loadDiff(1):showNoTask("diff-tbody",8);
+  if(id==="v-recommendations") TASK?loadRec():showNoTaskRec();
+}
+
+function showNoTask(id,cols=1){
+  const el=document.getElementById(id);
+  if(el) el.innerHTML=`<p style="color:var(--muted);padding:32px 0;text-align:center;grid-column:1/-1">请先从任务历史中选择一个任务</p>`;
+}
+function showNoTaskRec(){
+  ["rec-skill","rec-strategy","rec-weight"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML='<p style="color:var(--muted);padding:16px 0">请先从任务历史中选择一个任务。</p>';
+  });
+}
+function showNoTaskProgress(){}
+
+// ---- Toast ---------------------------------------------------------------
+function escHtml(s){
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function toast(msg,type="ok",ms=3000){
+  const el=document.createElement("div");
+  el.className=`toast ${type}`;el.textContent=msg;
+  document.getElementById("toast").appendChild(el);
+  setTimeout(()=>el.remove(),ms);
+}
+
+// ---- 文件上传区 -----------------------------------------------------------
+function setupZone(zoneId,inputId,nameId,setter){
+  const zone=document.getElementById(zoneId);
+  const inp=document.getElementById(inputId);
+  inp.onchange=e=>{if(e.target.files[0]) setFile(e.target.files[0],zone,nameId,setter);};
+  zone.ondragover=e=>{e.preventDefault();zone.classList.add("drag");};
+  zone.ondragleave=()=>zone.classList.remove("drag");
+  zone.ondrop=e=>{e.preventDefault();zone.classList.remove("drag");
+    if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0],zone,nameId,setter);};
+}
+function setFile(f,zone,nameId,setter){
+  setter(f);
+  zone.classList.add("done");
+  const nm=document.getElementById(nameId);
+  nm.textContent=f.name; nm.style.display="block";
+  const prefix=nameId.replace("-name","");
+  const removeRow=document.getElementById(prefix+"-remove-row");
+  if(removeRow) removeRow.style.display="block";
+  checkCreateReady();
+}
+function clearFile(prefix){
+  if(prefix==="gt"){GT_FILE=null;}
+  else{AE_FILE=null;}
+  const zone=document.getElementById("zone-"+prefix);
+  zone.classList.remove("done");
+  const nm=document.getElementById(prefix+"-name");
+  nm.textContent=""; nm.style.display="none";
+  const removeRow=document.getElementById(prefix+"-remove-row");
+  if(removeRow) removeRow.style.display="none";
+  const inp=document.getElementById("file-"+prefix);
+  if(inp) inp.value="";
+  checkCreateReady();
+}
+function checkCreateReady(){
+  const hasFiles=GT_FILE&&AE_FILE;
+  const hasName=document.getElementById("task-name").value.trim();
+  const hasJudge=document.getElementById("task-judge").value;
+  document.getElementById("btn-create").disabled=!(hasFiles&&hasName&&hasJudge);
+  document.getElementById("btn-check-dim").disabled=!hasFiles;
+}
+setupZone("zone-gt","file-gt","gt-name",f=>GT_FILE=f);
+setupZone("zone-ae","file-ae","ae-name",f=>AE_FILE=f);
+document.getElementById("task-name").oninput=checkCreateReady;
+document.getElementById("task-judge").onchange=checkCreateReady;
+
+// ---- 创建任务 + 上传文件 --------------------------------------------------
+document.getElementById("btn-create").onclick=async()=>{
+  const name=document.getElementById("task-name").value.trim();
+  if(!name||!GT_FILE||!AE_FILE){toast("请填写任务名称并上传两个文件","err");return;}
+  const judgeVal=document.getElementById("task-judge").value;
+  if(!judgeVal){toast("请选择 Judge 模型","err");return;}
+  const btn=document.getElementById("btn-create");
+  btn.disabled=true; btn.textContent="创建中...";
+  try{
+    const r=await fetch(API+"/api/tasks",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name,batch:v("task-batch"),judge_model:judgeVal})});
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error||"创建失败");
+    TASK=j.data;
+    await uploadFile(TASK.id,"ground-truth",GT_FILE);
+    await uploadFile(TASK.id,"auto-eval",AE_FILE);
+    toast("任务创建成功，文件已上传");
+    showTaskNav(true);
+    // 启动分析并直接跳指标看板（创建后立即分析）
+    try{
+      await fetch(`${API}/api/tasks/${TASK.id}/check`,{method:"POST"});
+      await fetch(`${API}/api/tasks/${TASK.id}/analyze`,{method:"POST"});
+      toast("分析已启动，完成后可查看指标");
+    }catch(_){}
+    showView("v-metrics");
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;btn.textContent="创建任务";}
+};
+function v(id){return document.getElementById(id)?.value?.trim()||null;}
+
+// ---- 检查维度（仅客户端文件，弹窗展示结果） ---------------------------------
+document.getElementById("btn-check-dim").onclick=async()=>{
+  if(!GT_FILE||!AE_FILE){toast("请先上传两个文件","warn");return;}
+  const btn=document.getElementById("btn-check-dim");
+  btn.disabled=true; btn.textContent="检查中...";
+  try{
+    // 临时上传文件到一个临时任务做检查
+    const tmpR=await fetch(API+"/api/tasks",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name:"__dim_check_tmp__"})});
+    const tmpJ=await tmpR.json();
+    if(!tmpJ.success) throw new Error("无法创建临时检查任务");
+    const tmpId=tmpJ.data.id;
+    await uploadFile(tmpId,"ground-truth",GT_FILE);
+    await uploadFile(tmpId,"auto-eval",AE_FILE);
+    const cr=await fetch(`${API}/api/tasks/${tmpId}/check`,{method:"POST"});
+    const cj=await cr.json();
+    if(!cj.success) throw new Error(cj.error||"检查失败");
+    showDimCheckModal(cj.data);
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;btn.textContent="🔍 检查维度";}
+};
+
+function showDimCheckModal(data){
+  const {dimension_check,overall_status}=data;
+  const dims=dimension_check?.dimensions||[];
+  const issues=dimension_check?.issues||[];
+  const matched=dims.filter(d=>d.in_gt&&d.in_auto).length;
+  const total=dims.length;
+  const isOk=overall_status==="pass"||(issues.length===0);
+
+  let body=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:14px;border-radius:8px;background:${isOk?"var(--jade-dim)":"var(--amber-dim)"}">
+    <span style="font-size:22px">${isOk?"✅":"⚠️"}</span>
+    <div>
+      <div style="font-size:15px;font-weight:700;color:${isOk?"var(--jade)":"var(--amber)"}">${isOk?"维度匹配正常":"存在维度差异"}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:2px">GT与AutoEval共有 ${matched}/${total} 个维度对齐</div>
+    </div>
+  </div>`;
+
+  if(issues.length){
+    body+=`<div style="margin-bottom:14px">`;
+    for(const iss of issues){
+      body+=`<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px">
+        <span style="color:${iss.level==="error"?"var(--red)":"var(--amber)"};flex-shrink:0">⚠</span>
+        <span>${iss.message}</span>
+      </div>`;
+    }
+    body+=`</div>`;
+  }
+
+  if(dims.length){
+    body+=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">维度明细</div>
+    <table class="tbl" style="font-size:13px">
+      <thead><tr><th>维度</th><th>GT</th><th>AutoEval</th></tr></thead><tbody>`;
+    for(const d of dims){
+      const miss=(!d.in_gt||!d.in_auto);
+      body+=`<tr style="${miss?"color:var(--amber)":""}">
+        <td><code>${d.code}</code></td>
+        <td>${d.in_gt?"✓":"—"}</td>
+        <td>${d.in_auto?"✓":"—"}</td>
+      </tr>`;
+    }
+    body+=`</tbody></table>`;
+  }
+
+  const overlay=document.createElement("div");
+  overlay.className="modal-overlay";
+  overlay.innerHTML=`<div class="modal">
+    <div class="modal-title">
+      <span>维度检查结果</span>
+    </div>
+    ${body}
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+    </div>
+  </div>`;
+  overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
+}
+
+async function uploadFile(taskId,type,file){
+  const fd=new FormData(); fd.append("file",file);
+  const r=await fetch(`${API}/api/tasks/${taskId}/upload/${type}`,{method:"POST",body:fd});
+  const j=await r.json();
+  if(!j.success) throw new Error(j.error||`上传${type}失败`);
+  return j.data;
+}
+
+// ---- 运行检查（历史任务进入维度检查视图） ----------------------------------
+async function runCheck(){
+  showView("v-check");
+  document.getElementById("check-content").innerHTML='<p style="color:var(--muted)">检查中...</p>';
+  try{
+    const r=await fetch(`${API}/api/tasks/${TASK.id}/check`,{method:"POST"});
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error||"检查失败");
+    document.getElementById("check-content").innerHTML=buildCheckHTML(j.data);
+  }catch(e){
+    document.getElementById("check-content").innerHTML=`<p style="color:var(--red)">${e.message}</p>`;
+  }
+}
+
+function renderCheckResult(data){
+  document.getElementById("check-content").innerHTML=buildCheckHTML(data);
+}
+function buildCheckHTML(data){
+  const {file_checks,dimension_check,sample_check,weight_check,overall_status}=data;
+  const statusBadge=s=>s==="pass"?'<span class="badge badge-pass">通过</span>':
+    s==="warn"?'<span class="badge badge-warn">警告</span>':
+    '<span class="badge badge-fail">阻塞</span>';
+  let html=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <span style="font-size:15px;font-weight:600">检查结果</span>
+    ${statusBadge(overall_status)}
+    ${overall_status!=="fail"?`<button class="btn btn-primary" onclick="startAnalyze()">开始分析</button>`:""}
+  </div>`;
+  // 文件检查
+  html+=`<div class="card"><div class="card-title">文件基础检查</div>`;
+  for(const fc of(file_checks||[])){
+    html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
+      ${statusBadge(fc.status)}
+      <span style="font-size:13px">${fc.message}</span>
+    </div>`;
+  }
+  html+="</div>";
+  // 维度检查
+  if(dimension_check){
+    html+=`<div class="card"><div class="card-title">维度对齐</div>
+      <table class="tbl"><thead><tr><th>维度代码</th><th>GT</th><th>AutoEval</th><th>状态</th></tr></thead><tbody>`;
+    for(const d of(dimension_check.dimensions||[])){
+      html+=`<tr><td><code>${d.code}</code></td><td>${d.in_gt?"✓":"—"}</td><td>${d.in_auto?"✓":"—"}</td><td>${statusBadge(d.status)}</td></tr>`;
+    }
+    html+="</tbody></table>";
+    if((dimension_check.issues||[]).length){
+      html+="<div style='margin-top:10px'>";
+      for(const iss of dimension_check.issues){
+        html+=`<div style="color:${iss.level==="error"?"var(--red)":"var(--amber)"};font-size:12px;padding:3px 0">⚠ ${iss.message}</div>`;
+      }
+      html+="</div>";
+    }
+    html+="</div>";
+  }
+  // 样本检查
+  if(sample_check){
+    html+=`<div class="card"><div class="card-title">样本对齐</div>
+      <div class="metric-grid" style="grid-template-columns:repeat(4,1fr)">
+        ${metricMini("匹配成功",sample_check.matched)}
+        ${metricMini("GT独有",sample_check.gt_only)}
+        ${metricMini("Auto独有",sample_check.auto_only)}
+        ${metricMini("重复行",sample_check.duplicates)}
+      </div>
+      ${(sample_check.issues||[]).map(i=>`<div style="color:${i.level==="error"?"var(--red)":"var(--amber)"};font-size:12px;padding:2px 0">⚠ ${i.message}</div>`).join("")}
+    </div>`;
+  }
+  // 权重检查
+  if(weight_check){
+    html+=`<div class="card"><div class="card-title">权重配置</div>
+      ${(weight_check.issues||[]).map(i=>`<div style="color:${i.level==="error"?"var(--red)":"var(--amber)"};font-size:12px;padding:3px 0">⚠ ${i.message}</div>`).join("")}
+      ${!weight_check.issues?.length?'<span style="color:var(--jade);font-size:13px">权重配置正常</span>':""}
+    </div>`;
+  }
+  return html;
+}
+function metricMini(lbl,val){
+  return `<div class="metric-card"><div class="val">${val??"-"}</div><div class="lbl">${lbl}</div></div>`;
+}
+
+// ---- 开始分析 -------------------------------------------------------------
+async function startAnalyze(){
+  if(!TASK){toast("无任务","err");return;}
+  try{
+    const r=await fetch(`${API}/api/tasks/${TASK.id}/analyze`,{method:"POST"});
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error||"启动失败");
+    toast("分析已启动");
+  }catch(e){toast(e.message,"err");}
+}
+
+
+// ---- 加载历史 -------------------------------------------------------------
+async function loadHistory(){
+  const tbody=document.getElementById("history-tbody");
+  try{
+    const r=await fetch(API+"/api/tasks");
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error);
+    const tasks=j.data||[];
+    if(!tasks.length){tbody.innerHTML='<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">暂无任务</td></tr>';stopHistoryPoll();return;}
+    tbody.innerHTML=tasks.map(t=>`<tr>
+      <td><a href="#" onclick="loadTask('${t.id}');return false">${t.name}</a></td>
+      <td style="color:var(--muted)">${t.batch||"—"}</td>
+      <td style="text-align:center"><span class="badge ${statusClass(t.status)}">${t.status}</span></td>
+      <td style="color:var(--muted);font-size:13px">${fmtJudgeModel(t.judge_model)}</td>
+      <td style="color:var(--muted);font-size:13px">${fmtDate(t.created_at)}</td>
+      <td style="text-align:center">
+        <div style="display:flex;gap:6px;justify-content:center">
+          <button class="btn btn-outline" style="padding:5px 12px;font-size:13px" onclick="loadTask('${t.id}')">打开</button>
+          ${t.status==='completed'?`<button class="btn btn-outline" style="padding:5px 12px;font-size:13px;border-color:var(--jade);color:var(--jade)" onclick="exportReportById('${t.id}',this)">📥 下载</button>`:'<button class="btn" style="padding:5px 12px;font-size:13px;background:var(--panel2);color:var(--faint);cursor:not-allowed" disabled>📥 下载</button>'}
+        </div>
+      </td>
+    </tr>`).join("");
+    // 有任务还在进行中，启动自动轮询
+    const hasPending=tasks.some(t=>["analyzing","generating_recommendations","exporting","pending","checking"].includes(t.status));
+    if(hasPending) startHistoryPoll();
+    else stopHistoryPoll();
+  }catch(e){tbody.innerHTML=`<tr><td colspan="6" style="color:var(--red)">${e.message}</td></tr>`;stopHistoryPoll();}
+}
+
+let _historyPollTimer=null;
+function startHistoryPoll(){
+  if(_historyPollTimer) return;
+  _historyPollTimer=setInterval(()=>{
+    if(document.getElementById("v-history").classList.contains("active")) loadHistory();
+  },3000);
+}
+function stopHistoryPoll(){
+  if(_historyPollTimer){clearInterval(_historyPollTimer);_historyPollTimer=null;}
+}
+
+function statusClass(s){
+  if(s==="completed") return "badge-pass";
+  if(["failed","check_failed"].includes(s)) return "badge-fail";
+  if(["analyzing","generating_recommendations","exporting"].includes(s)) return "badge-warn";
+  return "badge-info";
+}
+
+const JUDGE_LABELS={
+  "mock":"Mock（测试）",
+  "gpt-4o":"GPT-4o（外部）","gpt-4o-mini":"GPT-4o Mini（外部）",
+  "claude-opus-4":"Claude Opus 4（外部）","claude-sonnet-4":"Claude Sonnet 4（外部）",
+  "gemini-2.5-pro":"Gemini 2.5 Pro（外部）",
+  "ernie-internal":"文心（内部网关）"
+};
+function fmtJudgeModel(v){return v?JUDGE_LABELS[v]||v:"—";}
+
+function fmtDate(s){return s?new Date(s).toLocaleString("zh-CN",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).replace(/\//g,"-"):"—";}
+
+async function loadTask(id){
+  const r=await fetch(`${API}/api/tasks/${id}`);
+  const j=await r.json();
+  if(!j.success){toast("加载任务失败","err");return;}
+  TASK=j.data;
+  // 切换任务时重置差异样本筛选状态
+  DIFF_PAGE=1; DIFF_FILTER={};
+  const dimSel=document.getElementById("diff-filter-dim");
+  if(dimSel){dimSel.innerHTML='<option value="">全部维度</option>'; dimSel.value="";}
+  const sevSel=document.getElementById("diff-filter-severe");
+  if(sevSel) sevSel.value="";
+  showTaskNav(true);
+  showView("v-metrics");
+}
+
+function showTaskNav(show){
+  // 子项始终可见，无需 display 切换（始终展示在历史任务下方）
+}
+
+// ---- 指标看板 -------------------------------------------------------------
+async function loadMetrics(){
+  if(!TASK) return;
+  const cards=document.getElementById("metric-cards");
+  cards.innerHTML='<p style="color:var(--muted)">加载中...</p>';
+  try{
+    const r=await fetch(`${API}/api/tasks/${TASK.id}/metrics`);
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error);
+    const m=j.data?.overall||{};
+    const biasVal=m.bias!=null?(m.bias>0?"+":"")+m.bias.toFixed(3):"—";
+    const biasClass=m.bias!=null?(Math.abs(m.bias)>0.2?"warn":""):"";
+    const sevClass=m.severe_error_rate!=null?(m.severe_error_rate>0.05?"danger":""):"";
+    cards.innerHTML=[
+      metricCard("精确一致率",pct(m.exact_match),"分子/分母："+frac(m.exact_match_num,m.valid_cells),""),
+      metricCard("±1内一致率",pct(m.within1),"",""),
+      metricCard("Macro F1",pct(m.macro_f1),"",""),
+      metricCard("覆盖率",pct(m.coverage),"有效格/理论格",""),
+      metricCard("MAE",m.mae!=null?m.mae.toFixed(3):"—","平均绝对误差",""),
+      metricCard("Bias",biasVal,">0偏乐观  <0偏严格",biasClass),
+      metricCard("有效评分格",m.valid_cells??"—","理论："+(m.theoretical_cells??"—"),""),
+      metricCard("严重误判率",pct(m.severe_error_rate),"GT=0↔Auto=2",sevClass),
+    ].join("");
+    // 混淆矩阵
+    if(m.confusion_matrix){
+      document.getElementById("confusion-card").style.display="block";
+      renderConfusion(m.confusion_matrix);
+    }
+    // 分布
+    if(m.gt_distribution||m.auto_distribution){
+      document.getElementById("dist-card").style.display="block";
+      renderDist(m.gt_distribution,m.auto_distribution);
+    }
+  }catch(e){cards.innerHTML=`<p style="color:var(--red)">${e.message}</p>`;}
+}
+function metricCard(lbl,val,sub,extraClass){
+  return `<div class="metric-card${extraClass?" "+extraClass:""}"><div class="val">${val}</div><div class="lbl">${lbl}</div>${sub?`<div class="sub">${sub}</div>`:""}</div>`;
+}
+function pct(v){return v!=null?(v*100).toFixed(1)+"%":"—";}
+function frac(a,b){return (a??"—")+"/"+(b??"—");}
+
+function renderConfusion(cm){
+  const labels=Object.keys(cm);
+  let h=`<table class="tbl"><thead><tr><th>GT↓ / Auto→</th>${labels.map(l=>`<th>${l}</th>`).join("")}</tr></thead><tbody>`;
+  for(const gt of labels){
+    h+=`<tr><td><strong>${gt}</strong></td>${labels.map(auto=>`<td style="${gt===auto?"color:var(--jade)":""}">${cm[gt]?.[auto]??0}</td>`).join("")}</tr>`;
+  }
+  h+="</tbody></table>";
+  document.getElementById("confusion-table").innerHTML=h;
+}
+function renderDist(gt,auto){
+  const keys=["0","1","2"];
+  let h=`<table class="tbl"><thead><tr><th>分值</th><th>GT数量</th><th>Auto数量</th></tr></thead><tbody>`;
+  h+=keys.map(k=>`<tr><td>${k}</td><td>${gt?.[k]??0}</td><td>${auto?.[k]??0}</td></tr>`).join("");
+  h+="</tbody></table>";
+  document.getElementById("dist-table").innerHTML=h;
+}
+
+// ---- 差异样本 -------------------------------------------------------------
+async function loadDiff(page){
+  if(!TASK) return;
+  DIFF_PAGE=page;
+  const tbody=document.getElementById("diff-tbody");
+  tbody.innerHTML='<tr><td colspan="8" style="color:var(--muted);text-align:center">加载中...</td></tr>';
+  try{
+    // 构建查询参数（跳过空值）
+    const p={page,page_size:20};
+    if(DIFF_FILTER.dimension_code) p.dimension_code=DIFF_FILTER.dimension_code;
+    if(DIFF_FILTER.severe_only==="1") p.severe_only=true;
+    const params=new URLSearchParams(p);
+    const r=await fetch(`${API}/api/tasks/${TASK.id}/differences?${params}`);
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error);
+    const {items,total,page_size}=j.data;
+    DIFF_TOTAL=total;
+    tbody.innerHTML=(items||[]).map(d=>{
+      const gtScore  = d.ground_truth_score;
+      const autoScore = d.auto_score;
+      const isGtDash  = gtScore==="-"  || gtScore==null;
+      const isAutoDash= autoScore==="-"|| autoScore==null;
+      const gtColor   = "var(--jade)";
+      const autoColor = isAutoDash ? "var(--muted)"
+                        : (!isGtDash && autoScore>gtScore) ? "var(--amber)"
+                        : (!isGtDash && autoScore<gtScore) ? "var(--red)"
+                        : "var(--txt)";
+      const deltaCell = d.delta!=null
+        ? `<span style="color:${d.delta>0?"var(--amber)":d.delta<0?"var(--red)":"var(--muted)"}">${d.delta>0?"+":""}${d.delta}</span>`
+        : `<span style="color:var(--muted)">—</span>`;
+      const rcStyle = d.root_cause_category&&(d.root_cause_category.includes("空数据")||d.root_cause_category.includes("豁免"))
+        ? "color:var(--muted);font-style:italic"
+        : "color:var(--txt)";
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px">${d.data_id||"—"}</td>
+        <td>${d.candidate_model||"—"}</td>
+        <td><code>${d.dimension_code||"—"}</code></td>
+        <td style="color:${gtColor}">${isGtDash?'<span style="color:var(--muted)">-</span>':gtScore}</td>
+        <td style="color:${autoColor}">${isAutoDash?'<span style="color:var(--muted)">-</span>':autoScore}</td>
+        <td>${deltaCell}</td>
+        <td style="font-size:11px;${rcStyle}">${d.root_cause_category||"—"}</td>
+        <td style="font-size:11px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.auto_reason||""}">${d.auto_reason||"—"}</td>
+      </tr>`;
+    }).join("");
+    renderPagination("diff-pagination",page,Math.ceil(total/page_size),loadDiff);
+    renderPagination("diff-pagination-top",page,Math.ceil(total/page_size),loadDiff);
+    // 填充维度下拉（只在第一次加载时填，避免重置用户选择）
+    const sel=document.getElementById("diff-filter-dim");
+    if(sel.options.length<=1 && page===1 && !DIFF_FILTER.dimension_code){
+      populateDimFilter();
+    }
+  }catch(e){tbody.innerHTML=`<tr><td colspan="8" style="color:var(--red)">${e.message}</td></tr>`;}
+}
+function renderPagination(id,page,total,cb){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.innerHTML=`<button onclick="${cb.name}(${page-1})" ${page<=1?"disabled":""}>上一页</button>
+    <span>第 ${page} / ${total||1} 页</span>
+    <button onclick="${cb.name}(${page+1})" ${page>=total?"disabled":""}>下一页</button>`;
+}
+
+async function populateDimFilter(){
+  if(!TASK) return;
+  try{
+    // 从指标结果中取已有的维度列表
+    const r=await fetch(`${API}/api/tasks/${TASK.id}/metrics`);
+    const j=await r.json();
+    if(!j.success) return;
+    const codes=Object.keys(j.data?.by_dimension||{}).sort();
+    const sel=document.getElementById("diff-filter-dim");
+    if(!sel) return;
+    sel.innerHTML='<option value="">全部维度</option>'+codes.map(c=>`<option value="${c}">${c}</option>`).join("");
+  }catch(e){}
+}
+
+// ---- 优化建议 -------------------------------------------------------------
+async function loadRec(){
+  if(!TASK) return;
+  try{
+    const r=await fetch(`${API}/api/tasks/${TASK.id}/recommendations`);
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error);
+    const {skill=[],strategy=[],weight=[]}=j.data||{};
+    renderRecList("rec-skill",skill,renderSkillCard);
+    renderRecList("rec-strategy",strategy,renderStrategyCard);
+    renderRecList("rec-weight",weight,renderWeightCard);
+  }catch(e){toast(e.message,"err");}
+}
+function renderRecList(id,items,fn){
+  document.getElementById(id).innerHTML=items.length?items.map(fn).join(""):'<p style="color:var(--muted);padding:12px 0">暂无数据。</p>';
+}
+function renderSkillCard(r){
+  const priColor=r.priority==="P0"?"var(--red)":r.priority==="P1"?"var(--amber)":"var(--slate)";
+  const rubric=(r.content?.suggested_rubric||"").trim();
+  const llmSummary=(r.content?.llm_summary||"").trim();
+  return `<div class="card" style="border-left:3px solid ${priColor};margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <code style="font-size:14px;font-weight:700;color:var(--jade)">${r.target_dimension||"—"}</code>
+      <span class="badge badge-${r.priority==="P0"?"fail":r.priority==="P1"?"warn":"info"}">${r.priority||"P2"}</span>
+      <span class="badge badge-info">${r.status||"待验证"}</span>
+      ${r.llm_generated?'<span style="font-size:11px;color:var(--violet)">✦ LLM生成</span>':""}
+    </div>
+    <div style="font-size:13px;margin-bottom:8px;line-height:1.6"><span style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px">问题</span><br>${r.content?.current_problem||"—"}</div>
+    <div style="font-size:13px;line-height:1.6;padding-top:8px;border-top:1px solid var(--line)"><span style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px">建议</span><br>${r.content?.suggestion||"—"}</div>
+    ${llmSummary?`<div style="margin-top:10px;padding:8px 10px;background:rgba(109,74,255,.08);border-radius:6px;border-left:2px solid var(--violet);font-size:13px;line-height:1.6"><span style="color:var(--violet);font-size:11px;text-transform:uppercase;letter-spacing:.4px">LLM 分析</span><br>${escHtml(llmSummary)}</div>`:""}
+    ${rubric?`<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:6px 0;border-top:1px solid var(--line)">优化后评分标准建议 ▸</summary><div style="margin-top:8px;padding:10px;background:var(--surface2,#1a2332);border-radius:6px;font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--txt2,#c9d1d9)">${escHtml(rubric)}</div></details>`:""}
+  </div>`;
+}
+function renderStrategyCard(r){
+  return `<div class="card" style="margin-bottom:10px">
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">目标问题</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">${r.content?.target_problem||"—"}</div>
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">建议策略</div>
+        <div style="font-size:13px;line-height:1.6">${r.content?.suggested_strategy||"—"}</div>
+      </div>
+      <div style="min-width:120px;text-align:right">
+        <span class="badge badge-${r.priority==="P0"?"fail":r.priority==="P1"?"warn":"info"}" style="margin-bottom:6px;display:inline-block">${r.priority||"—"}</span>
+        <div style="font-size:11px;color:var(--faint)">${r.content?.affected_dimensions?.join(" · ")||""}</div>
+      </div>
+    </div>
+  </div>`;
+}
+function renderWeightCard(r){
+  const sw=r.content?.suggested_weights||{};
+  const cw=r.content?.current_weights||{};
+  const ch=r.content?.changes||{};
+  const cats=Object.keys(sw);
+  const rows=cats.map(c=>{
+    const delta=ch[c];
+    const sign=typeof delta==="number"?(delta>0?`<span style="color:var(--jade)">+${delta}</span>`:delta<0?`<span style="color:var(--red)">${delta}</span>`:"—"):"—";
+    return `<tr><td>${c}</td><td style="color:var(--muted)">${cw[c]??"-"}</td><td style="font-weight:600">${sw[c]??"-"}</td><td>${sign}</td></tr>`;
+  }).join("");
+  return `<div class="card" style="margin-bottom:10px${r.content?.recommended?" border-color:var(--jade)":""}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:15px;font-weight:700">${r.content?.scenario_name||"方案"}</span>
+      ${r.content?.recommended?'<span class="badge badge-pass">推荐</span>':""}
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">${r.content?.description||"—"}</div>
+    ${cats.length?`<table class="tbl" style="font-size:13px">
+      <thead><tr><th>类别</th><th style="color:var(--muted)">当前</th><th>建议</th><th>变化</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`:""}
+  </div>`;
+}
+
+// ---- 导出报告 -------------------------------------------------------------
+async function exportReport(){
+  if(!TASK){toast("无任务","err");return;}
+  const btn=event.target;btn.disabled=true;btn.textContent="生成中...";
+  try{
+    const r=await fetch(`${API}/api/tasks/${TASK.id}/export`,{method:"POST"});
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error||"导出失败");
+    toast("报告已生成，准备下载");
+    const dl=await fetch(`${API}/api/tasks/${TASK.id}/download-report`);
+    const blob=await dl.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download=j.data?.file_name||"report.xlsx";
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;btn.textContent="下载报告";}
+}
+
+async function exportReportById(taskId, btn){
+  const orig=btn.textContent;
+  btn.disabled=true;btn.textContent="生成中...";
+  try{
+    const r=await fetch(`${API}/api/tasks/${taskId}/export`,{method:"POST"});
+    const j=await r.json();
+    if(!j.success) throw new Error(j.error||"导出失败");
+    toast("报告已生成，准备下载");
+    const dl=await fetch(`${API}/api/tasks/${taskId}/download-report`);
+    const blob=await dl.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download=j.data?.file_name||"report.xlsx";
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;btn.textContent=orig;}
+}
+
+// ---- Skills & 权重视图 ----------------------------------------------------
+let _skillsData={dimensions:[]};
+let _weightsData={};
+let _selectedDimIdx=0;
+
+async function loadSkillsView(){
+  // 加载版本 meta
+  const mr=await fetch(API+"/api/config/meta");
+  const mj=await mr.json();
+  if(mj.success&&mj.data){
+    document.getElementById("meta-rubric").value=mj.data.rubric_version||"";
+    document.getElementById("meta-skill").value=mj.data.skill_version||"";
+    document.getElementById("meta-weight").value=mj.data.weight_version||"";
+  }
+  // 加载 skills
+  const sr=await fetch(API+"/api/config/skills");
+  const sj=await sr.json();
+  if(sj.success) _skillsData=sj.data||{dimensions:[]};
+  renderDimList();
+  if(_skillsData.dimensions.length) selectDim(0);
+  // 加载权重
+  const wr=await fetch(API+"/api/config/weights");
+  const wj=await wr.json();
+  if(wj.success) _weightsData=wj.data||{};
+  renderWeightsEditor();
+}
+
+function renderDimList(){
+  const dims=_skillsData.dimensions||[];
+  const CAT_COLORS={Gateway:"var(--jade)",Functionality:"var(--slate)",
+    Interactivity:"var(--amber)",Aesthetics:"var(--violet)",
+    Content:"var(--red)",DataPersistence:"var(--muted)"};
+  document.getElementById("dim-list").innerHTML=dims.map((d,i)=>`
+    <div onclick="selectDim(${i})" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;background:${_selectedDimIdx===i?"var(--jade-dim)":"transparent"};border:${_selectedDimIdx===i?"1px solid var(--jade)":"1px solid transparent"}">
+      <span style="width:8px;height:8px;border-radius:50%;background:${CAT_COLORS[d.category]||"var(--muted)"};flex-shrink:0"></span>
+      <span style="font-size:13px;font-weight:600;color:${_selectedDimIdx===i?"var(--jade)":"var(--txt)"};flex:1">${d.code}</span>
+      <span style="font-size:12px;color:var(--muted)">${d.name||""}</span>
+    </div>`).join("");
+}
+
+function selectDim(i){
+  _selectedDimIdx=i;
+  renderDimList();
+  const d=(_skillsData.dimensions||[])[i];
+  if(!d) return;
+  const panel=document.getElementById("dim-edit-panel");
+  const rubric = (d.rubric_points||"").trim();
+  const exemption = (d.exemption||"").trim();
+  panel.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <span style="font-size:16px;font-weight:700">${d.code}</span>
+      <span style="font-size:13px;color:var(--muted)">·</span>
+      <span style="font-size:14px;color:var(--muted)">${d.name||""}</span>
+      <span style="font-size:11px;background:var(--jade-dim);color:var(--jade);padding:2px 8px;border-radius:10px;margin-left:auto">${d.category||""}</span>
+      <span style="font-size:11px;background:var(--panel2);color:var(--muted);padding:2px 8px;border-radius:10px">${d.scale||""}</span>
+    </div>
+    <div class="form-grid" style="margin-bottom:10px">
+      <div class="form-row"><label>维度代码</label><input id="edit-code" value="${d.code||""}"/></div>
+      <div class="form-row"><label>维度名称</label><input id="edit-name" value="${d.name||""}"/></div>
+      <div class="form-row"><label>类别</label>
+        <select id="edit-cat">
+          ${["Gateway","Functionality","Interactivity","Aesthetics","Content","DataPersistence"].map(c=>`<option value="${c}"${d.category===c?" selected":""}>${c}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-row"><label>评分范围</label>
+        <select id="edit-scale">
+          <option value="0/1"${d.scale==="0/1"?" selected":""}>0/1（二分类）</option>
+          <option value="0/1/2"${d.scale==="0/1/2"?" selected":""}>0/1/2（三档）</option>
+        </select>
+      </div>
+      <div class="form-row"><label>层级</label>
+        <select id="edit-layer">
+          <option value="gateway"${d.layer==="gateway"?" selected":""}>gateway</option>
+          <option value="scoring"${d.layer==="scoring"?" selected":""}>scoring</option>
+        </select>
+      </div>
+    </div>
+    ${rubric?`<div style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">评分标准</div>
+      <div style="background:var(--panel2);border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--text)">${escHtml(rubric)}</div>
+    </div>`:""}
+    ${exemption?`<div style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--amber);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">豁免规则</div>
+      <div style="background:var(--panel2);border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--amber)">${escHtml(exemption)}</div>
+    </div>`:""}
+    <div class="form-row"><label>YAML 预览（可直接编辑后保存）</label>
+      <textarea id="edit-yaml" rows="6" style="font-family:monospace;font-size:12px;resize:vertical">${dimToYaml(d)}</textarea>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primary" onclick="saveDim(${i})">保存此维度</button>
+      <span style="font-size:11px;color:var(--muted)">edit 后点保存即更新配置</span>
+    </div>`;
+}
+
+function dimToYaml(d){
+  const base = `code: ${d.code||""}\ncategory: ${d.category||""}\nname: ${d.name||""}\nlayer: ${d.layer||"scoring"}\nscale: "${d.scale||"0/1/2"}"`;
+  return base;
+}
+
+function saveDim(i){
+  const orig = (_skillsData.dimensions||[])[i] || {};
+  // 从 textarea YAML 解析基础字段，fallback 到表单字段
+  const yamlText=document.getElementById("edit-yaml")?.value||"";
+  let parsed={};
+  try{
+    yamlText.split("\n").forEach(line=>{
+      const m=line.match(/^(\w+):\s*"?([^"]*)"?$/);
+      if(m) parsed[m[1].trim()]=m[2].trim();
+    });
+  }catch(e){}
+  // 保留原有 rubric_points / exemption / eval_type / automatable 等字段不覆盖
+  const updated={
+    ...orig,
+    code: parsed.code||document.getElementById("edit-code")?.value||orig.code||"",
+    name: parsed.name||document.getElementById("edit-name")?.value||orig.name||"",
+    category: parsed.category||document.getElementById("edit-cat")?.value||orig.category||"",
+    layer: parsed.layer||document.getElementById("edit-layer")?.value||orig.layer||"scoring",
+    scale: parsed.scale||document.getElementById("edit-scale")?.value||orig.scale||"0/1/2",
+  };
+  _skillsData.dimensions[i]=updated;
+  saveSkillsToServer();
+}
+
+async function saveSkillsToServer(){
+  const r=await fetch(API+"/api/config/skills",{method:"POST",
+    headers:{"Content-Type":"application/json"},body:JSON.stringify(_skillsData)});
+  const j=await r.json();
+  if(j.success) toast("Skills 已保存");
+  else toast(j.error||"保存失败","err");
+  renderDimList();
+}
+
+async function uploadSkillsFile(inp){
+  const file=inp.files[0]; if(!file) return;
+  const fd=new FormData(); fd.append("file",file);
+  const r=await fetch(API+"/api/config/skills/upload",{method:"POST",body:fd});
+  const j=await r.json();
+  if(j.success){_skillsData=j.data;renderDimList();selectDim(0);toast("Skills 文件已导入");}
+  else toast(j.error||"导入失败","err");
+  inp.value="";
+}
+
+function renderWeightsEditor(){
+  const cw=_weightsData.category_weights||{};
+  const cats=Object.keys(cw).length?Object.keys(cw):
+    ["Functionality","Interactivity","Aesthetics","Content"];
+  const CAT_ZH={
+    Functionality:"功能性",Interactivity:"交互性",Aesthetics:"美观性",
+    Content:"内容质量",Gateway:"网关",DataPersistence:"数据持久性"
+  };
+  document.getElementById("weights-editor").innerHTML=cats.map(cat=>`
+    <div class="card" style="padding:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px">${cat}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${CAT_ZH[cat]||""}</div>
+      <input type="number" id="w-${cat}" value="${cw[cat]??0}" min="0" max="100" step="0.5"
+        oninput="updateWeightSum()" style="font-size:18px;font-weight:700;text-align:center;color:var(--jade)"/>
+    </div>`).join("");
+  updateWeightSum();
+}
+
+function updateWeightSum(){
+  const cats=Object.keys(_weightsData.category_weights||{});
+  if(!cats.length) return;
+  const sum=cats.reduce((a,c)=>{
+    const el=document.getElementById(`w-${c}`);
+    return a+(el?parseFloat(el.value)||0:0);
+  },0);
+  const hint=document.getElementById("weights-sum-hint");
+  hint.textContent=`当前合计：${sum.toFixed(1)}${Math.abs(sum-100)<0.1?" ✓":" （建议合计=100）"}`;
+  hint.style.color=Math.abs(sum-100)<0.1?"var(--jade)":"var(--amber)";
+}
+
+async function saveWeights(){
+  const cats=Object.keys(_weightsData.category_weights||{});
+  if(!cats.length){toast("没有可保存的权重","warn");return;}
+  const newW={};
+  cats.forEach(c=>{
+    const el=document.getElementById(`w-${c}`);
+    newW[c]=el?parseFloat(el.value)||0:0;
+  });
+  const payload={..._weightsData,category_weights:newW};
+  const r=await fetch(API+"/api/config/weights",{method:"POST",
+    headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const j=await r.json();
+  if(j.success){_weightsData=payload;toast("权重已保存");}
+  else toast(j.error||"保存失败","err");
+}
+
+async function uploadWeightsFile(inp){
+  const file=inp.files[0]; if(!file) return;
+  const fd=new FormData(); fd.append("file",file);
+  const r=await fetch(API+"/api/config/weights/upload",{method:"POST",body:fd});
+  const j=await r.json();
+  if(j.success){_weightsData=j.data;renderWeightsEditor();toast("权重文件已导入");}
+  else toast(j.error||"导入失败","err");
+  inp.value="";
+}
+
+async function saveMeta(){
+  const payload={
+    rubric_version:document.getElementById("meta-rubric").value.trim(),
+    skill_version:document.getElementById("meta-skill").value.trim(),
+    weight_version:document.getElementById("meta-weight").value.trim(),
+  };
+  const r=await fetch(API+"/api/config/meta",{method:"POST",
+    headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const j=await r.json();
+  if(j.success) toast("版本信息已保存");
+  else toast(j.error||"保存失败","err");
+}
+
+// ---- 初始化 --------------------------------------------------------------
+showView("v-history");
+</script>
+</body>
+</html>
