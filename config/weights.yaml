@@ -1,0 +1,24 @@
+# 类别权重（当前合计=102，检查时会提示归一化）
+category_weights:
+  Functionality: 31
+  Interactivity: 28
+  Aesthetics: 31
+  Content: 12
+  # DataPersistence: 16  # 可选，按需启用
+
+# 类别内维度是否等权分配
+equal_within_category: true
+
+# 各维度明细权重（equal_within_category=true 时忽略）
+dimension_weights: {}
+
+# Gateway 维度（任意为0则总分=0）
+gateway: [G1, G2, G3, G4]
+
+# 各类别包含的维度
+categories:
+  Functionality:    [F1, F2, F3, F4]
+  Interactivity:    [I1, I2, I3, I4]
+  Aesthetics:       [A1, A2, A3, A4]
+  Content:          [C1, C2]
+  DataPersistence:  [DP1, DP2, DP3, DP4]

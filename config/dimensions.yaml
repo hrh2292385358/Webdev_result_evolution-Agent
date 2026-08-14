@@ -1,0 +1,301 @@
+dimensions:
+
+  - code: G1
+    category: Gateway
+    name: 推理与部署完整性
+    layer: gateway
+    scale: "0/1"
+    automatable: true
+    eval_type: 自动化评估
+    exemption: ""
+    rubric_points: |
+      出现以下任一情况即判 fail（0 分）：
+      - 推理超时：模型推理在 harness/scaffold 设定的最大时间窗口内未完成
+      - 推理不停止/死循环：模型持续输出不收敛，未产生最终交付物
+      - 部署失败：harness/scaffold 拿到代码后未能成功部署/启动，未产出可访问环境
+      - 无评估链接：评估流水线未能生成评估人可访问的 URL/入口
+
+  - code: G2
+    category: Gateway
+    name: 代码正常渲染
+    layer: gateway
+    scale: "0/1"
+    automatable: true
+    eval_type: 自动化 + 人工客观评估
+    exemption: 渲染后大面积无内容可豁免（不考虑渲染内容质量）。
+    rubric_points: |
+      - 1 分（pass）：模型生成结果可以正常渲染；使用 React/Next.js 项目需要正常构建
+      - 0 分（fail）：代码无法渲染或构建失败
+
+  - code: G3
+    category: Gateway
+    name: 运行时稳定性
+    layer: gateway
+    scale: "0/1"
+    automatable: true
+    eval_type: 自动化 + 人工客观评估
+    exemption: ""
+    rubric_points: |
+      以下任一情况判 fail（0 分）：
+      - 空闲白屏：页面渲染后静置 ≥5s，不得因 hydration error、未捕获 Promise、循环 setState、async effect 异常等导致整页白屏或 Error Boundary 兜底崩溃
+      - 操作后白屏：所有可见可交互元素触发后，不得出现整页白屏、不可恢复崩溃或路由后无内容
+      - 可恢复性：不刷新页面应可继续使用；需手动刷新才能恢复判定为 fail
+
+  - code: G4
+    category: Gateway
+    name: 需求意图匹配
+    layer: gateway
+    scale: "0/1"
+    automatable: false
+    eval_type: 人工主观评估
+    exemption: 用户未要求使用 HTML 语言，或指定使用其他语言（Python、PHP 等），模型依然使用 HTML/React 实现可豁免。
+    rubric_points: |
+      标准极宽松，约 90% 以上 case 为 pass。
+      给 1 分（pass）当：页面有内容结构，看得出在需求方向上做了努力；语义相关即视为匹配。
+      给 0 分（fail）当：页面完全白屏/404/无法访问；页面仅有占位符/Lorem ipsum/空白骨架；
+      交付形态根本性错位；用户明确点名的主体功能整体未实现；页面与需求完全无关联。
+      关键校准：主题与 Query 不完全吻合不构成 fail；给 0 分时必须说明三点：页面呈现了什么、Query 要求了什么、为什么判定为根本性错位。
+
+  - code: F1
+    category: Functionality
+    name: 功能逻辑正确
+    layer: scoring
+    scale: "0/1/2"
+    automatable: false
+    eval_type: 人工客观评估
+    exemption: 无豁免。
+    rubric_points: |
+      2 分：所有声明功能均按预期工作，主流程可闭环且边缘场景无逻辑漏洞
+      1 分：核心功能可用，存在 1-2 处非核心或边缘逻辑瑕疵
+      0 分：核心功能缺失或存在明显错误，影响主流程使用
+
+  - code: F2
+    category: Functionality
+    name: 数据展示正确
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 人工客观评估
+    exemption: 无豁免。
+    rubric_points: |
+      2 分：所有数据格式规范完整，无截断/溢出/重叠/乱码，所有网络图片正常加载无死链
+      1 分：数据可读但存在轻微截断或格式不统一；个别图片加载失败但不影响整体可读性
+      0 分：出现明显乱码、文字遮挡或数据严重错位，或图片大面积图裂导致信息不可读
+
+  - code: F3
+    category: Functionality
+    name: 响应式适配
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 人工客观评估
+    exemption: 无豁免。
+    rubric_points: |
+      2 分：Desktop/Tablet/Mobile 三档下布局自适应良好，无溢出/重叠
+      1 分：主档（Desktop）正常，Tablet/Mobile 存在轻微布局问题但不影响阅读
+      0 分：任一主流尺寸下出现严重溢出、断层或信息混乱
+
+  - code: F4
+    category: Functionality
+    name: 无控制台错误
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 自动化 + 人工客观评估
+    exemption: 无豁免。
+    rubric_points: |
+      2 分：控制台无 Error 且无 Warning，运行干净
+      1 分：无 Error，仅有可豁免的 Warning
+      0 分：存在 Error，影响功能或体验
+
+  - code: DP1
+    category: DataPersistence
+    name: 鉴权正确性
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 自动化 + 人工客观评估
+    exemption: 若该维度在本场景不适用，置空并从分母剔除。
+    rubric_points: |
+      检查步骤：注册、登出、重登、双账号隔离、未登录访问受保护页。
+      2 分：鉴权全流程正常，登录态稳定，登出后受保护页不可访问，双账号私有数据严格隔离
+      1 分：登录/注册主流程可用，但存在轻微问题（偶发会话丢失、个别受保护页未拦截、非核心数据隔离不完整）
+      0 分：无法完成登录/注册、登出无效、未登录可访问核心受保护页、账号间可见对方核心私有数据，或完全未做用户隔离
+
+  - code: DP2
+    category: DataPersistence
+    name: CRUD正确性
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 自动化 + 人工客观评估
+    exemption: 若该维度在本场景不适用，置空并从分母剔除。
+    rubric_points: |
+      2 分：增删改查四类操作正确，状态同步无明显瑕疵
+      1 分：核心 CRUD 可用，存在 1-2 处可感知同步问题（如删除延迟消失、计数短暂不准）
+      0 分：核心增删改不可用、数据明显错乱或关键操作需非常规步骤
+
+  - code: DP3
+    category: DataPersistence
+    name: 数据持久化
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 自动化 + 人工客观评估
+    exemption: 若该维度在本场景不适用，置空并从分母剔除。
+    rubric_points: |
+      2 分：核心数据跨会话保留
+      1 分：大体保留，个别非核心字段刷新后丢失
+      0 分：刷新后核心数据丢失或假持久化
+
+  - code: DP4
+    category: DataPersistence
+    name: 数据隔离正确性
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 自动化 + 人工客观评估
+    exemption: 若该维度在本场景不适用，置空并从分母剔除。
+    rubric_points: |
+      2 分：双账号私有数据严格隔离，列表、详情、统计、搜索/筛选、CRUD 读写与直接访问均按当前用户作用域执行
+      1 分：核心私有数据基本隔离，但存在非核心数据、计数、筛选结果、缓存残留、URL/API 边界等局部串号问题
+      0 分：账号间可见或可操作对方核心私有数据，或写入完全未绑定当前用户作用域
+
+  - code: I1
+    category: Interactivity
+    name: 交互反馈
+    layer: scoring
+    scale: "0/1/2"
+    automatable: false
+    eval_type: 人工主观评估
+    exemption: 无豁免。
+    rubric_points: |
+      2 分：所有操作均有即时清晰反馈，错误提示友好规范，整体连贯一致（截图可见 toast/alert/loading/hover/表单验证等）
+      1 分：核心操作有基础反馈结构，但反馈强度或一致性欠佳（有可交互元素，但看不出明显反馈强化设计）
+      0 分：页面完全无任何可交互元素，或有明确证据说明操作无响应（纯静态展示页、无 input/button/link）
+
+  - code: I2
+    category: Interactivity
+    name: 过渡效果
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 人工主观评估
+    exemption: 无豁免。
+    rubric_points: |
+      2 分：状态变化、模态/菜单的出现消失均有自然过渡，节奏一致
+      1 分：核心交互有过渡，部分次级状态切换生硬
+      0 分：状态变化全程无过渡，全部生硬跳转
+
+  - code: I3
+    category: Interactivity
+    name: 动画流畅
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 自动化 + 视觉模型复核
+    exemption: 复杂粒子系统在低端设备上的性能问题可豁免；3D/WebGL 场景下的轻微帧率波动可豁免。
+    rubric_points: |
+      check.py 客观检测为主要依据：
+      2 分：Web Animations API 有调用；或 requestAnimationFrame 有活动；或多信号组合（@keyframes + transition>5，或 CSS动画元素>3，或 @keyframes>2）
+      1 分：@keyframes > 0；或 transition 元素 > 5；或有 CSS animation active
+      0 分：未检测到任何动画信号（@keyframes=0，animCount=0，transition≤5，webAnim=0，rAF=否）
+      校准：I3=1 分约占 45%，I3=2 分约占 35%，I3=0 分约占 20%。检测到任何动画信号即给 1 分，不因"动画不够丰富"降为 0 分。
+
+  - code: I4
+    category: Interactivity
+    name: 用户体验
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 人工主观评估
+    exemption: 若该维度在本场景不适用，置空并从分母剔除。
+    rubric_points: |
+      I4 独立评价整体易用性，不受 G4 或 A1/A2 影响。
+      2 分（体验优秀）：导航清晰、信息层次分明、引导明确、操作有反馈
+      1 分（体验一般）：基本可用，但缺少操作反馈、导航不够清晰或信息难以快速获取
+      0 分（体验差）：导航混乱、无任何操作反馈、用户无法完成基本操作
+
+  - code: A1
+    category: Aesthetics
+    name: 布局合理性
+    layer: scoring
+    scale: "0/1/2"
+    automatable: false
+    eval_type: 人工主观评估
+    exemption: 无豁免。
+    rubric_points: |
+      仅评空间组织方式，不评内容完整性。即使页面内容稀少，只要空间组织合理，A1 仍可给 2 分。
+      维度边界：死链/图片缺失→C1；字体颜色不一致→A2；功能缺失→F1；动画过渡→I2/I3。
+      2 分：宏观排版疏密有致，模块分区清晰，整屏留白均衡，主次分明
+      1 分：宏观布局可辨识，模块分区尚可，但存在轻微拥挤/松散，或个别模块边界不清
+      0 分：信息密集堆叠或大面积空白，布局崩溃，严重影响阅读
+
+  - code: A2
+    category: Aesthetics
+    name: 排版规范性
+    layer: scoring
+    scale: "0/1/2"
+    automatable: false
+    eval_type: 人工主观评估
+    exemption: 无豁免。
+    rubric_points: |
+      2 分：字体/字号/行高/间距/圆角/卡片全套规范，元素像素级对齐，组件视觉高度一致
+      1 分：核心规范遵循，但存在少量字号层级混用、间距不一致或局部对齐偏差
+      0 分：字体严重不统一、间距混乱或元素明显错位，无法作为规范参考
+
+  - code: A3
+    category: Aesthetics
+    name: 色彩协调性
+    layer: scoring
+    scale: "0/1/2"
+    automatable: false
+    eval_type: 人工主观评估
+    exemption: 无豁免。
+    rubric_points: |
+      2 分：配色协调舒适、主色辅色比例运用合理、对比度充足，符合业务调性
+      1 分：配色基本协调，但存在个别饱和度过高、对比度不足或主辅色比例失衡等瑕疵
+      0 分：颜色过多/单一、对比度严重不足、色彩整体大面积饱和度高或配色与场景明显冲突
+
+  - code: A4
+    category: Aesthetics
+    name: 设计感
+    layer: scoring
+    scale: "0/1/2"
+    automatable: false
+    eval_type: 人工主观评估
+    exemption: 无豁免。
+    rubric_points: |
+      默认 1 分，不是 2 分。
+      2 分（有说服力的设计感）：须同时满足以下至少 2 项：①有独特视觉风格/品牌一致性；②图标/插图有定制化处理；③有视觉层次感（标题/正文/辅助文字明显区分）；④色彩系统搭配成熟且有情感调性；⑤负空间/间距运用专业
+      1 分（基本干净）：页面整洁、对齐良好，但使用框架默认风格，没有明显设计语言或视觉个性
+      0 分（无设计感）：纯文本堆砌、裸布局、无样式、颜色冲突明显
+
+  - code: C1
+    category: Content
+    name: 内容图片质量
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 人工客观评估
+    exemption: |
+      以下情况豁免：需求本身不要求图片（纯文字报告、数据表格）；需求未明确提图片且页面主体是文字/数据/交互功能；
+      页面以图标/SVG 装饰为主、无内容性图片。图标字体和 SVG 图标不算"无图片"，不触发 0 分。
+    rubric_points: |
+      默认 1 分，不是 0 分。权责分离：G4 跑题不影响 C1 独立评分；图片能正常展示即至少 1 分。
+      2 分：所有图片清晰，与内容精确契合，无 Emoji 替代实图
+      1 分：图片正常展示（默认起点）；基本清晰但存在少量图文弱相关；或用 Emoji 替代了实体图片
+      0 分：仅限三种：①页面完全无图片且需求明确要求含图；②图片大面积像素化到完全无法辨认；③每张图都是完全不相关的占位滥图
+
+  - code: C2
+    category: Content
+    name: 音视频效果
+    layer: scoring
+    scale: "0/1/2"
+    automatable: true
+    eval_type: 人工客观评估
+    exemption: 浏览器自动播放策略导致首次音频需用户交互触发可豁免。
+    rubric_points: |
+      2 分：音视频完整、同步精准、可控，体验良好
+      1 分：有基础音视频但覆盖不全或少量同步问题
+      0 分：音视频严重异常、无法播放或完全无声
